@@ -1,0 +1,713 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Учебник Таджвида: Риваят Хафс от 'Асыма</title>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Noto Sans (Russian) & Amiri (Arabic) -->
+    <link href="https://fonts.googleapis.com/css2?family=Amiri:ital,wght@0,400;0,700;1,400&family=Noto+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        body {
+            font-family: 'Noto Sans', sans-serif;
+            scroll-behavior: smooth;
+        }
+        .arabic {
+            font-family: 'Amiri', serif;
+            direction: rtl;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #059669; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #047857; 
+        }
+        .prose strong {
+            color: #047857;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // Компонент для отображения арабского текста
+        
+        const Arabic = ({ children, className = "" }) => (
+            <span className={`arabic text-xl md:text-2xl text-emerald-800 font-bold ${className} mx-1`}>
+                {children}
+            </span>
+        );
+
+        // Компонент раздела
+        const Section = ({ id, title, children }) => (
+            <section id={id} className="mb-12 scroll-mt-24 bg-white p-6 md:p-10 rounded-xl shadow-sm border border-slate-200">
+                <h2 className="text-2xl md:text-3xl font-bold text-emerald-800 mb-8 border-b pb-4 border-emerald-100 flex items-center">
+                    <span className="bg-emerald-100 text-emerald-800 text-lg font-bold px-3 py-1 rounded mr-3 h-fit">§</span>
+                    {title}
+                </h2>
+                <div className="prose prose-slate max-w-none leading-relaxed text-lg space-y-6">
+                    {children}
+                </div>
+            </section>
+        );
+
+        const App = () => {
+            const [isMenuOpen, setIsMenuOpen] = useState(false);
+            const [activeSection, setActiveSection] = useState('intro');
+
+            const navItems = [
+                { id: 'intro', label: '1. Арабские буквы (28/29)' },
+                { id: 'writing', label: '2. Особенности письма' },
+                { id: 'tashkeel', label: '3-4. Ташкиль и Танвины' },
+                { id: 'special-letters', label: '5-8. Алиф, Хамза, Та марбута' },
+                { id: 'article', label: '9. Артикль (Солнечные/Лунные)' },
+                { id: 'tajweed-intro', label: 'Определение Таджвида и Корана' },
+                { id: 'errors', label: 'I-II. Ошибки (Лахн) и Хукм' },
+                { id: 'basmala', label: 'Истиаза и Басмала' },
+                { id: 'makharij', label: 'III. Махаридж (Места выхода)' },
+                { id: 'sifat', label: 'IV. Сыфат (Свойства)' },
+                { id: 'nun-sakina', label: 'V. Нун Сакина и Танвин' },
+                { id: 'mim-sakina', label: 'VI. Мим Сакина' },
+                { id: 'mudud', label: 'VII. Аль-Мудуд (Удлинения)' },
+                { id: 'tafkheem', label: 'VIII. Тафхим и Таркик' },
+                { id: 'idgham-misc', label: 'IX. Прочие Идгамы' },
+                { id: 'waqf', label: 'X. Аль-Вакф (Остановка)' },
+                { id: 'hafs', label: 'XI. Особенности Хафса' },
+            ];
+
+
+const scrollToSection = (id) => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.scrollIntoView({ behavior: 'smooth' });
+                    setActiveSection(id);
+                    setIsMenuOpen(false);
+                }
+            };
+
+            return (
+                <div className="flex min-h-screen flex-col md:flex-row">
+                    {/* Sidebar Navigation */}
+                    <aside className={`fixed inset-y-0 left-0 z-50 w-80 bg-emerald-900 text-white transform transition-transform duration-300 ease-in-out md:translate-x-0 md:static md:h-screen md:sticky md:top-0 md:overflow-y-auto ${isMenuOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+                        <div className="p-6 border-b border-emerald-800">
+                            <h1 className="text-2xl font-bold text-emerald-100 flex items-center gap-2">
+                                <span>📖</span> Предтаджвид
+                            </h1>
+                            <p className="text-emerald-400 text-sm mt-2">Полный курс по тексту</p>
+                        </div>
+                        <nav className="p-4">
+                            <ul className="space-y-1">
+                                {navItems.map((item) => (
+                                    <li key={item.id}>
+                                        <button 
+                                            onClick={() => scrollToSection(item.id)}
+                                            className={`w-full text-left px-4 py-3 rounded-lg text-sm transition-colors ${activeSection === item.id ? 'bg-emerald-700 text-white font-semibold shadow-md' : 'text-emerald-200 hover:bg-emerald-800 hover:text-white'}`}
+                                        >
+                                            {item.label}
+                                        </button>
+                                    </li>
+                                ))}
+                            </ul>
+                        </nav>
+                    </aside>
+
+                    {/* Mobile Header */}
+                    <div className="md:hidden fixed top-0 w-full bg-emerald-900 text-white z-40 p-4 flex justify-between items-center shadow-md">
+                        <span className="font-bold">Таджвид: Полное меню</span>
+                        <button onClick={() => setIsMenuOpen(!isMenuOpen)} className="p-2 bg-emerald-800 rounded hover:bg-emerald-700">
+                            {isMenuOpen ? '✕' : '☰'}
+                        </button>
+                    </div>
+
+                    {/* Main Content */}
+                    <main className="flex-1 p-4 pt-20 md:p-10 md:pt-10 max-w-5xl mx-auto">
+                        
+                        {/* Section 1 */}
+                        <Section id="intro" title="1. Количество арабских букв">
+                            <p>Количество арабских букв насчитывает 28 или 29 — это предмет разногласий среди учёных, заключающийся в том, считать ли Хамзу (<Arabic>ء</Arabic>) отдельной буквой.</p>
+                            
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">1.1. Различия в подсчёте</h3>
+                            
+                            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200 mt-4">
+                                <h4 className="font-bold text-lg mb-2">1 Группа: 28 букв</h4>
+                                <p>В этот порядок включают чисто письменные буквы. Этот порядок называется <strong>Абджадия</strong> и раньше он использовался для нумерации. Он был составлен Насром бну ‘Асымом аль-Лайси в 90-м году по Хиджре. Он расположил буквы по схожести начертания и добавил точки для их различения.</p>
+                                <div className="mt-4 p-4 bg-white rounded border border-slate-100 text-center">
+
+
+<p className="text-sm text-slate-500 mb-2">Последовательность Абджадия:</p>
+                                    <Arabic>أ، ب، ت، ث، ج، ح، خ، د، ذ، ر، ز، س، ش، ص، ض، ط، ظ، ع، غ، ف، ق، ك، ل، م، ن، هـ، و، لا، ي</Arabic>
+                                </div>
+                            </div>
+
+                            <div className="bg-slate-50 p-6 rounded-lg border border-slate-200 mt-4">
+                                <h4 className="font-bold text-lg mb-2">2 Группа: 29 букв</h4>
+                                <p>Такое количество достигается за счёт добавления к общему числу произносимых букв Хамзы (<Arabic>ء</Arabic>). У этого алфавита есть западный и восточный варианты последовательности.</p>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                    <div className="bg-white p-3 rounded border">
+                                        <strong className="block text-sm text-slate-500 mb-1">Восточный вариант:</strong>
+                                        <Arabic>أَبْجَدْ، هَوَّزْ، حُطِّي، كَلَمُنْ، سَعْفَصْ، قَرَشَتْ، تَخَةٌ، ضَطَغْ</Arabic>
+                                    </div>
+                                    <div className="bg-white p-3 rounded border">
+                                        <strong className="block text-sm text-slate-500 mb-1">Западный вариант:</strong>
+                                        <Arabic>أَبْجَدْ، هَوَّزْ، حُطِّي، كَلَمُنْ، صَعْفَضْ، قَرَسَتْ، تَخَةٌ، ظَغَشُ</Arabic>
+                                    </div>
+                                </div>
+                            </div>
+                        </Section>
+
+                        {/* Section 2 */}
+                        <Section id="writing" title="2. Особенности письма">
+                            <p><strong>2.1 Согласные и гласные:</strong> Все арабские буквы согласные и вообще согласные пишутся/отображаются только буквами, кроме ташкиля и особенно краткие гласные (ـَ ـُ ـِ), о которых речь пройдет позже.</p>
+                            <p><strong>2.2 Направление письма:</strong> Арабская письменность пишется справа налево.</p>
+                            <p className="bg-yellow-50 p-3 rounded border border-yellow-200 inline-block"><strong>Исключение:</strong> Арабские цифры <Arabic>١، ٢، ٣، ٤، ٥، ٦، ٧، ٨، ٩، ٠</Arabic> пишутся и читаются слева направо. Однако в общей конструкции текста они всё равно располагаются в потоке строки, идущей справа.</p>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">2.3. Видоизменение и соединение</h3>
+                            <p>Арабские буквы видоизменяются в зависимости от их положения в слове: Изолированная, В начале слова, В середине слова, В конце слова.</p>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">2.4. Типы соединения</h3>
+                            <ul className="space-y-4 mt-4">
+                                <li className="bg-white p-4 rounded shadow-sm border-l-4 border-emerald-500">
+                                    <strong>(А) Соединяются с обеих сторон:</strong> С предыдущей и с последующей.<br/>
+                                    <Arabic>ب، ت، ث، ج، ح، خ، س، ش، ص، ض، ط، ظ، ع، غ، ف، ق، ك، ل، م، ن، ه، ي</Arabic>
+                                </li>
+                                <li className="bg-white p-4 rounded shadow-sm border-l-4 border-orange-500">
+                                    <strong>(Б) Соединяются только с предыдущей:</strong> Но не с последующей.<br/>
+                                    <Arabic>ا، د، ذ، ر، ز، و</Arabic>
+                                </li>
+                                <li className="bg-white p-4 rounded shadow-sm border-l-4 border-red-500">
+                                    <strong>(В) Не соединяются вообще:</strong><br/>
+                                    <Arabic>ء</Arabic> (если считать его буквой).
+                                </li>
+                            </ul>
+                        </Section>
+
+
+{/* Section 3-4 */}
+                        <Section id="tashkeel" title="3-4. Ташкиль и Танвины">
+                            <p>Ташкиль — это собирательный термин диакритических знаков, куда входят харакяты, сукун, танвины, шадда/ташдид и т.д.</p>
+                            
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">3.1 Харакаты (Краткие гласные)</h3>
+                            <p>Специальные знаки, дающие краткие гласные звуки, стоящие под/над арабскими буквами, и указывающие на 'ираба (падеж окончания). В некотором смысле это указывает на определённость слова (что частично связано с артиклем <Arabic>ال</Arabic>).</p>
+                            
+                            <table className="w-full mt-4 border-collapse bg-white shadow-sm">
+                                <thead>
+                                    <tr className="bg-emerald-50 text-emerald-900">
+                                        <th className="p-3 border text-left">Название</th>
+                                        <th className="p-3 border text-center">Знак</th>
+                                        <th className="p-3 border text-left">Звук</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td className="p-3 border">Фатха</td><td className="p-3 border text-center"><Arabic>ـــَ</Arabic></td><td className="p-3 border">≈а</td></tr>
+                                    <tr><td className="p-3 border">Дамма</td><td className="p-3 border text-center"><Arabic>ـــُ</Arabic></td><td className="p-3 border">у</td></tr>
+                                    <tr><td className="p-3 border">Кясра</td><td className="p-3 border text-center"><Arabic>ـــِ</Arabic></td><td className="p-3 border">и</td></tr>
+                                </tbody>
+                            </table>
+                            <p className="mt-4 text-sm bg-slate-100 p-3 rounded"><strong>Логика:</strong> Согласная буква + Ташкиль = Связка. Например, Ба (<Arabic>بَ</Arabic>) = <Arabic>ـَ</Arabic> + <Arabic>ب</Arabic>. Называются краткими, так как их антагонисты — длинные гласные (мадды).</p>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">3.2. Сукун (<Arabic>ـْ</Arabic>)</h3>
+                            <p>Обозначает отсутствие гласного (покой). Если стоит над буквой, выявляет её чистый согласный звук.</p>
+                            <p className="italic mt-2 text-slate-600">Аналогия: 2 + 0 = 2. Где 2 — это согласная буква, а 0 — это сукун. Ничего не меняется, выявляется чистая согласная.</p>
+                            <p className="mt-2"><strong>Важное правило:</strong> Арабы избегают встречи двух сукунов подряд, меняя огласовки. Арабская речь не начинается с сукуна.</p>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">Шадда (<Arabic>ـّ</Arabic>) (Удвоение)</h3>
+                            <p>Обозначает удвоение согласного. <strong>Условие:</strong> Первая из дублируемых букв всегда будет с сукуном (<Arabic>ْ</Arabic>), а последующая останется со своим харакатом/танвином.</p>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">4.2. Танвины ('ираба Неопределенности)</h3>
+                            <p>Дубликаты харакатов, указывающие на падеж и неопределённость (отсутствие артикля <Arabic>ال</Arabic>). В них зашифрован Нун (<Arabic>ن</Arabic>) с сукуном, который произносится в разных формах (изхар, идгам, икляб, ихфа).</p>
+                            
+                            <div className="grid md:grid-cols-3 gap-4 mt-4 text-center">
+                                <div className="p-3 border rounded bg-slate-50">Танвин фатха <Arabic>ـً</Arabic> [ан]</div>
+
+
+<div className="p-3 border rounded bg-slate-50">Танвин Дамма <Arabic>ـٌ</Arabic> [ун]</div>
+                                <div className="p-3 border rounded bg-slate-50">Танвин Кясра <Arabic>ـٍ</Arabic> [ин]</div>
+                            </div>
+
+                            <h4 className="font-bold mt-4">Особое правило Танвина фатха:</h4>
+                            <p>При Танвине фатха в конце добавляется Алиф (<Arabic>ا</Arabic>), который продлевается на 2 счёта при остановке. Исключения (буквы, не принимающие Алиф): <Arabic>ا، ة، ء، ى</Arabic>.</p>
+                        </Section>
+
+                        {/* Special Letters */}
+                        <Section id="special-letters" title="5-8. Особенности отдельных букв (Алиф, Алиф максура, Та марбута, Хамза)">
+                            <div className="space-y-8">
+                                <div>
+                                    <h3 className="text-xl font-bold text-emerald-700 border-b pb-2">5. Алиф (<Arabic>ا</Arabic>) (Буква мадд)</h3>
+                                    <ul className="list-disc pl-5 space-y-2 mt-2">
+                                        <li><strong>Звучание:</strong> Всегда под сукуном, не имеет собственного звучания.</li>
+                                        <li><strong>Написание:</strong> Никогда не пишется изолированно или в начале слова (в начале слова мы видим Хамзу на подставке, а не Алиф). Пишется только в середине и конце.</li>
+                                        <li><strong>Функция:</strong> Действует лишь как буква мадд для продления гласного.</li>
+                                        <li><strong>Связь с Танвином:</strong> Слово не принимает доп. Алиф под Танвином фатха, если он там уже есть. Продлевается существующий Алиф.</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-xl font-bold text-emerald-700 border-b pb-2">6. Алиф максура (<Arabic>ى</Arabic>)</h3>
+                                    <p>Разновидность Алифа, пишется всегда в конце слова.</p>
+                                    <p className="mt-2"><strong>Произношение:</strong></p>
+                                    <ul className="list-disc pl-5 mt-1">
+                                        <li>Как продлевающий мадд алиф в конце (без знаков).</li>
+                                        <li>Как Йа (когда огласована).</li>
+                                    </ul>
+                                    <p className="mt-2"><strong>Вариации в Мусхафе:</strong> 1) с харакатами/танвинами; 2) с маленьким Алифом; 3) без ничего.</p>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-xl font-bold text-emerald-700 border-b pb-2">7. Та марбута (<Arabic>ة</Arabic>)</h3>
+                                    <p>Знак женского рода ед.ч., всегда в конце слова.</p>
+                                    <ul className="list-disc pl-5 mt-2">
+                                        <li><strong>При остановке:</strong> Произносится как <Arabic>ه</Arabic> (ха) под сукуном.</li>
+                                        <li><strong>При продолжении:</strong> Произносится как <Arabic>ت</Arabic> с огласовкой.</li>
+                                    </ul>
+                                    <p className="mt-2 text-sm text-slate-600">Не принимает дополнительного Алифа при Танвине фатха.</p>
+                                </div>
+
+                                <div>
+                                    <h3 className="text-xl font-bold text-emerald-700 border-b pb-2">8. Хамза (<Arabic>ء</Arabic>)</h3>
+                                    <p>Единственная буква, которая в изолированной форме графически не соединяется ни с чем.</p>
+
+
+<h4 className="font-bold mt-4">8.2. Виды Хамзы</h4>
+                                    <div className="grid md:grid-cols-2 gap-6 mt-2">
+                                        <div className="bg-emerald-50 p-4 rounded">
+                                            <strong>Хамзат-уль-Кат’ (Разделительная):</strong>
+                                            <p className="mt-2">Всегда произносится. Стоит везде: в начале, середине, конце.</p>
+                                            <Arabic className="block mt-2">أ، إ، ئ، ؤ، ء</Arabic>
+                                        </div>
+                                        <div className="bg-emerald-50 p-4 rounded">
+                                            <strong>Хамзат аль-Уасль (Соединительная):</strong>
+                                            <p className="mt-2">Встречается только с буквой <Arabic>ا</Arabic>. Не произносится при соединении.</p>
+                                            <p className="mt-2"><strong>Правило 3-й буквы (для глаголов):</strong></p>
+                                            <ul className="list-disc pl-5 text-sm">
+                                                <li>3-я буква с кясрой/фатхой → читаем с кясрой.</li>
+                                                <li>3-я буква с даммой → читаем с даммой.</li>
+                                            </ul>
+                                            <p className="mt-2 text-sm"><strong>Исключения (дамма временная):</strong> <Arabic>ٱبْنُو، ٱقْضُو، ٱمْشُو</Arabic> (читаем с кясрой).</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </Section>
+
+                        {/* Article */}
+                        <Section id="article" title="9. Артикль определённости (ٱلْ)">
+                            <p>Указывает на конкретную вещь. Несовместим с Танвином.</p>
+                            
+                            <div className="grid md:grid-cols-2 gap-6 mt-6">
+                                <div className="border-2 border-orange-200 bg-orange-50 p-5 rounded-lg">
+                                    <h4 className="font-bold text-orange-900 text-lg flex items-center gap-2">☀️ Солнечные буквы</h4>
+                                    <p className="mt-2 text-sm">Если за буквой идёт артикль, солнечная буква удваивается (Шадда), а звук «Л» не читается.</p>
+                                    <div className="mt-3 p-3 bg-white rounded border border-orange-100 text-center leading-loose">
+                                        <Arabic>ت، ث، د، ذ، ر، ز، س، ش، ص، ض، ط، ظ، ل، ن</Arabic>
+                                    </div>
+                                </div>
+
+                                <div className="border-2 border-indigo-200 bg-indigo-50 p-5 rounded-lg">
+                                    <h4 className="font-bold text-indigo-900 text-lg flex items-center gap-2">🌙 Лунные буквы</h4>
+                                    <p className="mt-2 text-sm">Артикль произносится чётко, как есть, без изменений.</p>
+                                    <div className="mt-3 p-3 bg-white rounded border border-indigo-100 text-center leading-loose">
+                                        <Arabic>أ، ب، ج، ح، خ، ع، غ، ف، ق، ك، م، هـ، و، ي</Arabic>
+                                    </div>
+                                </div>
+                            </div>
+                        </Section>
+
+                        {/* Tajweed Def */}
+                        <Section id="tajweed-intro" title="Определение Таджвида и Корана">
+                            <p><strong>Ат-Таджвид</strong> в языковом значении — «улучшение». В терминологии — наука о правильном чтении Корана: произнесение каждой буквы из её махраджа с соблюдением её сыфатов и правил (мадды, идгам, гунна и др.).</p>
+
+
+<h3 className="text-xl font-bold text-emerald-700 mt-6">Что такое Коран?</h3>
+                            <p>Это неподражаемая речь Всевышнего Аллаха, ниспосланная на сердце пророка Мухаммада (ﷺ), посредством которой поклоняются, записанная в мусхафах, переданная путём таватура и являющаяся вызовом самой короткой своей сурой.</p>
+                            
+                            <div className="space-y-4 mt-4 text-sm bg-slate-50 p-4 rounded border">
+                                <p><strong>«Речь Аллаха»:</strong> Не речь одержимого, не колдовство, не стихи, не слова Джибриля или Пророка. Это прямая речь Бога.</p>
+                                <p><strong>«Ниспослано на сердце»:</strong> В отличие от Инджиля или Таурата, Коран ниспослан именно на сердце Пророка.</p>
+                                <p><strong>«Посредством которой поклоняются»:</strong> За каждую букву — награда (хасана). Читается в намазе (в отличие от Хадисов Кудси).</p>
+                                <p><strong>«Путём таватура»:</strong> Передано огромным количеством людей, что исключает сговор или ошибку.</p>
+                                <p><strong>«Вызов самой короткой сурой»:</strong> Аллах бросил вызов создать подобное, и никто не смог этого сделать.</p>
+                                <p><strong>«Между двумя обложками»:</strong> 114 сур, 30 джузов, без излишка или недостатка.</p>
+                            </div>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">Почему читаем по таджвиду?</h3>
+                            <p>Потому что так он был ниспослан. Когда Ислам распространился среди неарабов, появились ошибки, и возникла необходимость утвердить науку Таджвид.</p>
+                            
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">Скорости чтения</h3>
+                            <ul className="list-disc pl-5 mt-2">
+                                <li><strong>Тахкык:</strong> Медленное чтение (для обучения).</li>
+                                <li><strong>Тадвир:</strong> Средняя скорость.</li>
+                                <li><strong>Хадр:</strong> Быстрое чтение.</li>
+                            </ul>
+                            <p className="mt-2">Всех их объединяет <strong>Тартиль</strong> (размеренное чтение).</p>
+                        </Section>
+
+                        {/* Errors */}
+                        <Section id="errors" title="Раздел I-II: Ошибки (Аль-Лахн) и Хукм">
+                            <h3 className="text-xl font-bold text-red-700">1. Аль-Лахн аль-Джали (Явная ошибка)</h3>
+                            <p>Влияет на произношение слова, нарушая смысл или грамматику.</p>
+                            <ul className="list-disc pl-5 mt-2">
+                                <li>Изменение огласовки: <Arabic>أَنْعَمْتُ</Arabic> вместо <Arabic>أَنْعَمْتَ</Arabic>.</li>
+                                <li>Замена буквы: <Arabic>عَصَى</Arabic> через «с» вместо «сад».</li>
+                            </ul>
+
+                            <h3 className="text-xl font-bold text-orange-600 mt-6">2. Аль-Лахн аль-Хафи (Скрытая ошибка)</h3>
+                            <p>Нарушает полноту характеристик (сыфат), не выводя букву из границ. Например, упущение гунны или мадда.</p>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">Хукм (Положение)</h3>
+                            <div className="bg-white border p-4 rounded mt-2">
+                                <p><strong>Махаридж и смыслоразличительные сыфаты:</strong> Соблюдение обязательно (Ваджиб). Нарушение — Харам.</p>
+                                <p className="mt-2"><strong>Улучшающие сыфаты (Скрытая ошибка):</strong></p>
+
+
+<ul className="list-disc pl-5 text-sm">
+                                    <li>При обучении: Обязательно (иначе ложь в передаче).</li>
+                                    <li>Обычное чтение (для знающего): Порок/недостаток.</li>
+                                    <li>Обычное чтение (для простого мусульманина): Нет греха.</li>
+                                </ul>
+                            </div>
+                        </Section>
+
+                        {/* Basmala */}
+                        <Section id="basmala" title="Истиаза и Басмала">
+                            <p><strong>1. Истиаза:</strong> Обязательна при начале чтения Корана (независимо от места).</p>
+                            <p className="mt-2"><strong>2. Басмала:</strong></p>
+                            <ul className="list-disc pl-5 mt-1">
+                                <li>В начале суры: Обязательна (кроме Ат-Тауба).</li>
+                                <li>В середине суры: По выбору.</li>
+                            </ul>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">Смысловые исключения (середина суры):</h3>
+                            <ul className="list-disc pl-5 mt-2">
+                                <li><strong>Не читать Басмалю:</strong> Если аят о неверующих, аде, шайтане (чтобы не связывать "Милостивый" с гневом).</li>
+                                <li><strong>Обязательно читать:</strong> Если аят начинается с местоимения "Он" (к Аллаху), чтобы не отнести его к шайтану после Истиазы.</li>
+                            </ul>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">Правила соединения</h3>
+                            <p><strong>Дозволенные (начало суры):</strong> 1) Все соединить. 2) Все разделить. 3) Истиаза соед., Басмала разд. 4) Истиаза разд., Басмала соед.</p>
+                            <p className="mt-2 text-red-600 font-bold">Запрещено (между сурами):</p>
+                            <p>Соединить конец суры с Басмалой и остановиться (слушатель подумает, что Басмала — это конец прошлой суры).</p>
+                        </Section>
+
+                        {/* Makharij */}
+                        <Section id="makharij" title="III. Махаридж аль-Хуруф (Места выхода)">
+                            <p>5 основных областей, 17 точек.</p>
+
+                            <div className="space-y-6 mt-6">
+                                <div>
+                                    <h4 className="font-bold text-emerald-800 border-b border-emerald-200 inline-block mb-2">1. Аль-Джауф (Полость рта и горла)</h4>
+                                    <p>Три долгие гласные (Мадд): Алиф, Вав, Йа.</p>
+                                </div>
+                                
+                                <div>
+                                    <h4 className="font-bold text-emerald-800 border-b border-emerald-200 inline-block mb-2">2. Аль-Хальк (Горло)</h4>
+                                    <ul className="list-disc pl-5">
+                                        <li>Дальняя (Акса): <Arabic>ء هـ</Arabic></li>
+                                        <li>Средняя (Васат): <Arabic>ع ح</Arabic></li>
+                                        <li>Ближайшая (Адна): <Arabic>غ خ</Arabic></li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h4 className="font-bold text-emerald-800 border-b border-emerald-200 inline-block mb-2">3. Аль-Лисан (Язык) - 10 точек, 18 букв</h4>
+                                    <ul className="list-disc pl-5 space-y-2 text-sm">
+                                        <li><strong>Акса (Задняя):</strong> <Arabic>ق</Arabic> (касается мягкого неба), <Arabic>ك</Arabic> (ниже, твердое+мягкое небо).</li>
+
+
+<li><strong>Васат (Середина):</strong> <Arabic>ج ش ي</Arabic> (немаддовая).</li>
+                                        <li><strong>Хаффа (Край):</strong> <Arabic>ض</Arabic> (край языка о коренные зубы - сложная), <Arabic>ل</Arabic> (ближайший край о десны).</li>
+                                        <li><strong>Тараф (Кончик):</strong>
+                                            <ul className="pl-4 list-[circle] mt-1 text-slate-600">
+                                                <li><Arabic>ن</Arabic> (о десны), <Arabic>ر</Arabic> (ближе к спинке).</li>
+                                                <li><Arabic>ت د ط</Arabic> (о корни верхних резцов).</li>
+                                                <li><Arabic>ص س ز</Arabic> (свистящие - межзубная щель).</li>
+                                                <li><Arabic>ث ذ ظ</Arabic> (межзубные - о края верхних резцов).</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h4 className="font-bold text-emerald-800 border-b border-emerald-200 inline-block mb-2">4. Аш-Шафатан (Губы)</h4>
+                                    <ul className="list-disc pl-5">
+                                        <li><Arabic>ف</Arabic> (низ губы о верхние резцы).</li>
+                                        <li><Arabic>و م ب</Arabic> (между губами: Вав - округление, Мим/Ба - смыкание).</li>
+                                    </ul>
+                                </div>
+
+                                <div>
+                                    <h4 className="font-bold text-emerald-800 border-b border-emerald-200 inline-block mb-2">5. Аль-Хайшум (Нос)</h4>
+                                    <p>Место выхода Гунны (для Нун и Мим).</p>
+                                </div>
+                            </div>
+                        </Section>
+
+                        {/* Sifat */}
+                        <Section id="sifat" title="IV. Сыфат аль-Хуруф (Свойства)">
+                            <h3 className="text-xl font-bold text-emerald-700 mt-4">1. Свойства с противоположностями</h3>
+                            <div className="overflow-x-auto mt-4">
+                                <table className="w-full text-sm border-collapse">
+                                    <thead className="bg-slate-100">
+                                        <tr><th className="p-2 border">Свойство 1</th><th className="p-2 border">Буквы</th><th className="p-2 border">Свойство 2</th><th className="p-2 border">Буквы</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td className="p-2 border font-semibold">Хамс (Шепот)</td>
+                                            <td className="p-2 border"><Arabic>ف ح ث ه ش خ ص س ك ت</Arabic></td>
+                                            <td className="p-2 border font-semibold">Джахр (Звонкость)</td>
+                                            <td className="p-2 border">Остальные</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-2 border font-semibold">Шидда (Сила)</td>
+                                            <td className="p-2 border"><Arabic>ء ج د ق ط ب ك ت</Arabic></td>
+                                            <td className="p-2 border font-semibold">Рахава (Мягкость)</td>
+                                            <td className="p-2 border">Остальные (кроме <Arabic>ل ن ع م ر</Arabic> - Тавассут)</td>
+
+
+</tr>
+                                        <tr>
+                                            <td className="p-2 border font-semibold">Исти'ля (Подъем)</td>
+                                            <td className="p-2 border"><Arabic>خ ص ض غ ط ق ظ</Arabic></td>
+                                            <td className="p-2 border font-semibold">Истифаль (Спуск)</td>
+                                            <td className="p-2 border">Остальные</td>
+                                        </tr>
+                                        <tr>
+                                            <td className="p-2 border font-semibold">Итбак (Смыкание)</td>
+                                            <td className="p-2 border"><Arabic>ص ض ط ظ</Arabic></td>
+                                            <td className="p-2 border font-semibold">Инфитах (Откр.)</td>
+                                            <td className="p-2 border">Остальные</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">2. Свойства без противоположностей</h3>
+                            <ul className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                <li className="bg-slate-50 p-3 rounded"><strong>Сафир (Свист):</strong> <Arabic>ص س ز</Arabic></li>
+                                <li className="bg-slate-50 p-3 rounded"><strong>Калькаля (Вибрация):</strong> <Arabic>ق ط ب ج د</Arabic> (в сукуне). <br/><span className="text-xs text-slate-500">Виды: Кубра (сильная, в конце), Сугра (слабая, в середине).</span></li>
+                                <li className="bg-slate-50 p-3 rounded"><strong>Лин (Мягкость):</strong> <Arabic>و ي</Arabic> с сукуном после фатхи.</li>
+                                <li className="bg-slate-50 p-3 rounded"><strong>Инхираф (Отклонение):</strong> <Arabic>ل ر</Arabic>.</li>
+                                <li className="bg-slate-50 p-3 rounded"><strong>Такрир (Повторение):</strong> <Arabic>ر</Arabic> (следует избегать излишества).</li>
+                                <li className="bg-slate-50 p-3 rounded"><strong>Тафашши (Распространение):</strong> <Arabic>ش</Arabic>.</li>
+                                <li className="bg-slate-50 p-3 rounded"><strong>Иститаля (Удлинение):</strong> <Arabic>ض</Arabic>.</li>
+                            </ul>
+                        </Section>
+
+                        {/* Nun Sakina */}
+                        <Section id="nun-sakina" title="V. Ахкам Нун Сакина и Танвин">
+                            <p className="mb-4">Четыре правила в зависимости от следующей буквы.</p>
+                            
+                            <div className="space-y-4">
+                                <div className="border border-l-4 border-l-blue-500 p-4 rounded bg-white">
+                                    <h4 className="font-bold text-blue-700">1. Аль-Изхар (Ясное чтение)</h4>
+                                    <p>Перед горловыми: <Arabic>ء هـ ع ح غ خ</Arabic>. Читаем четко, без гунны.</p>
+                                </div>
+
+                                <div className="border border-l-4 border-l-green-500 p-4 rounded bg-white">
+                                    <h4 className="font-bold text-green-700">2. Аль-Идгам (Слияние)</h4>
+                                    <p>Буквы: <Arabic>ي ر م ل و ن</Arabic>.</p>
+                                    <ul className="list-disc pl-5 mt-2 text-sm">
+                                        <li><strong>С гунной (Янму):</strong> <Arabic>ي ن م و</Arabic>.</li>
+                                        <li><strong>Без гунны:</strong> <Arabic>ل ر</Arabic>.</li>
+
+
+<li><strong>Исключение (Изхар Мутлак):</strong> Если в одном слове (<Arabic>الدُّنْيَا, قِنْوَانٌ, صِنْوَانٌ, بُنْيَانٌ</Arabic>).</li>
+                                    </ul>
+                                </div>
+
+                                <div className="border border-l-4 border-l-red-500 p-4 rounded bg-white">
+                                    <h4 className="font-bold text-red-700">3. Аль-Икляб (Превращение)</h4>
+                                    <p>Перед <Arabic>ب</Arabic>. Нун превращается в Мим с гунной.</p>
+                                </div>
+
+                                <div className="border border-l-4 border-l-purple-500 p-4 rounded bg-white">
+                                    <h4 className="font-bold text-purple-700">4. Аль-Ихфа (Скрытие)</h4>
+                                    <p>Оставшиеся 15 букв. Звук скрывается (между Изхаром и Идгамом) с гунной. Твердость гунны зависит от следующей буквы.</p>
+                                </div>
+                            </div>
+                        </Section>
+
+                        {/* Mim Sakina */}
+                        <Section id="mim-sakina" title="VI. Ахкам Мим Сакина">
+                            <ol className="list-decimal pl-5 space-y-4 font-bold text-emerald-800">
+                                <li>
+                                    <span className="text-black font-normal"><strong>Ихфа Шафави (Губное скрытие):</strong> Перед <Arabic>ب</Arabic>. С гунной.</span>
+                                </li>
+                                <li>
+                                    <span className="text-black font-normal"><strong>Идгам Шафави (Слияние):</strong> Перед <Arabic>م</Arabic>. С гунной.</span>
+                                </li>
+                                <li>
+                                    <span className="text-black font-normal"><strong>Изхар Шафави (Ясное):</strong> Перед всеми остальными. Особенно внимательно перед <Arabic>و</Arabic> и <Arabic>ف</Arabic> (чтобы не скрыть).</span>
+                                </li>
+                            </ol>
+                        </Section>
+
+                        {/* Mudud */}
+                        <Section id="mudud" title="VII. Аль-Мудуд (Удлинения)">
+                            <h3 className="text-xl font-bold text-emerald-700">1. Мадд Асли (Естественный)</h3>
+                            <p>2 счета. Нет причин (Хамзы/Сукуна).</p>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">2. Мадд Фар'и (По причине Хамзы)</h3>
+                            <ul className="list-disc pl-5 mt-2 space-y-2">
+                                <li><strong>Муттасыль (Слитный):</strong> Хамза в том же слове. Обязательно 4-5 счетов.</li>
+                                <li><strong>Мунфасыль (Раздельный):</strong> Хамза в начале следующего слова. 4-5 счетов (по Шатибийя).</li>
+                                <li><strong>Бадаль (Замещающий):</strong> Хамза перед Маддом (<Arabic>ءَامَنَ</Arabic>). 2 счета.</li>
+                            </ul>
+                            
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">3. Мадд Фар'и (По причине Сукуна)</h3>
+                            <ul className="list-disc pl-5 mt-2 space-y-2">
+                                <li><strong>Арид лис-Сукун:</strong> Временный сукун при остановке. 2, 4 или 6 счетов.</li>
+                                <li><strong>Лин:</strong> Буквы <Arabic>و ي</Arabic> с сукуном после фатхи при остановке. 2, 4, 6 счетов.</li>
+                                <li><strong>Лязим (Обязательный):</strong> Постоянный сукун (или шадда). Всегда 6 счетов.
+                                    <ul className="pl-4 list-[square] mt-1 text-sm text-slate-600">
+
+
+<li>Калими (в слове): Мусаккаль (тяжелый - с шаддой) и Мухаффаф (легкий - с сукуном, напр. <Arabic>آلْآنَ</Arabic>).</li>
+                                        <li>Харфи (в буквах): В началах сур.</li>
+                                    </ul>
+                                </li>
+                            </ul>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">Особый случай: Мадд Фарк</h3>
+                            <p>Для различения вопроса. 6 счетов. Примеры: <Arabic>آلْآنَ, آلذَّكَرَيْنِ, آللَّهُ</Arabic>. (Допустимо также Тасхиль).</p>
+                        </Section>
+
+                        {/* Tafkheem / Tarqeeq */}
+                        <Section id="tafkheem" title="VIII. Тафхим и Таркик">
+                            <div className="space-y-6">
+                                <div>
+                                    <h4 className="font-bold text-lg">1. Всегда твердые (Тафхим)</h4>
+                                    <p>Буквы Исти'ля (<Arabic>خ ص ض غ ط ق ظ</Arabic>). Самая сильная степень — с фатхой и алифом.</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg">2. Всегда мягкие (Таркик)</h4>
+                                    <p>Все остальные (кроме Алиф, Лям, Ра).</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-lg">3. Зависящие от условий</h4>
+                                    <ul className="list-disc pl-5 mt-2">
+                                        <li><strong>Алиф:</strong> Следует за предыдущей буквой (твердая за твердой, мягкая за мягкой).</li>
+                                        <li><strong>Лям (в имени Аллаха):</strong> Твердая после фатхи/даммы, мягкая после кясры.</li>
+                                        <li><strong>Ра (<Arabic>ر</Arabic>):</strong>
+                                            <ul className="pl-4 border-l-2 border-emerald-300 ml-2 mt-1 space-y-1 text-sm">
+                                                <li><strong>Твердая:</strong> С фатхой/даммой. С сукуном после фатхи/даммы. С сукуном после временной кясры (<Arabic>ارْجِعِي</Arabic>). С сукуном перед буквой Исти'ля (<Arabic>مِرْصَادًا</Arabic>).</li>
+                                                <li><strong>Мягкая:</strong> С кясрой. С сукуном после оригинальной кясры (без Исти'ля). С сукуном после Я-сакина (<Arabic>خَيْرٌ</Arabic>).</li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </Section>
+
+                        {/* Misc Idghams */}
+                        <Section id="idgham-misc" title="IX. Прочие Идгамы">
+                            <ul className="space-y-4">
+                                <li>
+                                    <strong>Мутамасиляйн (Одинаковые):</strong> Две одинаковые буквы (первая сукун). Сливаются. (<Arabic>ب</Arabic> в <Arabic>ب</Arabic>).
+                                </li>
+                                <li>
+                                    <strong>Мутаджанисайн (Однородные):</strong> Один махрадж, разные свойства.
+                                    <br/>Примеры: <Arabic>ت-د-ط</Arabic>, <Arabic>ذ-ظ-ث</Arabic>, <Arabic>ب-م</Arabic>.
+                                    <br/>(<Arabic>أَجِيبَت دَّعْوَتُكُمَا</Arabic>).
+                                </li>
+                                <li>
+                                    <strong>Мутакарибайн (Близкие):</strong> Близкие махраджи.
+                                    <br/><Arabic>ل</Arabic> в <Arabic>ر</Arabic> (<Arabic>قُل رَّبِّ</Arabic>).
+
+
+<br/><Arabic>ق</Arabic> в <Arabic>ك</Arabic> (<Arabic>نَخْلُقكُّم</Arabic> - полный или неполный).
+                                </li>
+                            </ul>
+                        </Section>
+
+                        {/* Waqf */}
+                        <Section id="waqf" title="X. Аль-Вакф (Остановка)">
+                            <h3 className="text-xl font-bold text-emerald-700">Виды остановки по смыслу</h3>
+                            <ul className="list-disc pl-5 mt-2">
+                                <li><strong>Тамм (Полная):</strong> Смысл завершен, нет связи.</li>
+                                <li><strong>Кафи (Достаточная):</strong> Смысл завершен, есть связь в грамматике.</li>
+                                <li><strong>Хасан (Хорошая):</strong> Смысл завершен, но сильная связь. (Лучше не начинать со следующего, если не конец аята).</li>
+                                <li><strong>Кабих (Дурная):</strong> Смысл нарушается. Запрещено (кроме необходимости).</li>
+                            </ul>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">Способы остановки</h3>
+                            <ul className="list-disc pl-5 mt-2">
+                                <li><strong>Искан (Сукун):</strong> Основной. Убираем огласовку.</li>
+                                <li><strong>Раум:</strong> 1/3 звука (дамма/кясра).</li>
+                                <li><strong>Ишмам:</strong> Беззвучное смыкание губ (только дамма).</li>
+                                <li><strong>Ибдаль (Замена):</strong> Танвин фатха → Алиф. Та марбута → Ха.</li>
+                            </ul>
+
+                            <h3 className="text-xl font-bold text-emerald-700 mt-6">Сакт (Пауза без дыхания) у Хафса</h3>
+                            <p>Короткая пауза без вдоха.</p>
+                            <p className="mt-2 font-bold">4 обязательных места:</p>
+                            <ul className="list-disc pl-5 text-sm">
+                                <li>Аль-Кахф: 1-2 (<Arabic>عِوَجًا ۜ قَيِّمًا</Arabic>)</li>
+                                <li>Йа-Син: 52 (<Arabic>مَرْقَدِنَا ۜ هَٰذَا</Arabic>)</li>
+                                <li>Аль-Кыяма: 27 (<Arabic>مَنْ ۜ رَاقٍ</Arabic>)</li>
+                                <li>Аль-Мутаффифин: 14 (<Arabic>بَلْ ۜ رَانَ</Arabic>)</li>
+                            </ul>
+                        </Section>
+
+                        {/* Hafs */}
+                        <Section id="hafs" title="XI. Особенности Хафса">
+                            <div className="grid md:grid-cols-2 gap-4">
+                                <div className="border p-4 rounded bg-slate-50">
+                                    <strong className="block text-emerald-800">Ималя (Наклонение)</strong>
+                                    Только одно слово: <Arabic>مَجْر۪ىٰهَا</Arabic> (Худ, 41).
+                                </div>
+                                <div className="border p-4 rounded bg-slate-50">
+                                    <strong className="block text-emerald-800">Тасхиль (Облегчение)</strong>
+                                    Слово <Arabic>ءَا۬عْجَمِيٌّ</Arabic> (Фуссылят, 44). Вторая хамза мягкая.
+                                </div>
+                                <div className="border p-4 rounded bg-slate-50">
+                                    <strong className="block text-emerald-800">Сад / Син</strong>
+                                    <Arabic>يَبْصُطُ</Arabic> и <Arabic>بَصْطَةً</Arabic> читаются через <Arabic>س</Arabic>.
+                                    <br/><Arabic>الْمُصَيْطِرُونَ</Arabic> через <Arabic>ص</Arabic>.
+                                </div>
+                                <div className="border p-4 rounded bg-slate-50">
+
+
+<strong className="block text-emerald-800">Да'ф (Слабость)</strong>
+                                    Сура Ар-Рум (54): Можно читать <Arabic>ضَعْفٍ</Arabic> (фатха) и <Arabic>ضُعْفٍ</Arabic> (дамма).
+                                </div>
+                                <div className="border p-4 rounded bg-slate-50 col-span-1 md:col-span-2">
+                                    <strong className="block text-emerald-800">Атани (Ан-Намль: 36)</strong>
+                                    При остановке: <Arabic>آتَانِيْ</Arabic> (с Йа) или <Arabic>آتَانْ</Arabic> (без Йа).
+                                </div>
+                            </div>
+                        </Section>
+
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
