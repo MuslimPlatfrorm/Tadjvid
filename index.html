@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="ru" class="">
 <head>
@@ -62,11 +63,11 @@
         .nb:hover{background:rgba(255,255,255,.06);transform:translateX(2px)}
         .nb.on{background:var(--sb-act);color:#fff;font-weight:600;box-shadow:inset 3px 0 0 var(--accent)}
         /* ── Draggable page-scroll track (right edge of sidebar, desktop only) ── */
-        .sb-track{display:none;width:14px;background:rgba(255,255,255,.05);border-left:1px solid rgba(255,255,255,.1);position:relative;flex-shrink:0;cursor:pointer}
+        .sb-track{display:none;width:20px;margin:8px 6px 8px 0;padding:6px 4px;background:rgba(255,255,255,.05);border-radius:99px;position:relative;flex-shrink:0;cursor:pointer}
         @media(min-width:1024px){.sb-track{display:block}}
-        .sb-thumb{position:absolute;left:3px;right:3px;min-height:44px;border-radius:99px;background:var(--accent);opacity:.7;cursor:grab;transition:opacity .2s,background .2s;box-shadow:0 2px 12px var(--accent-glow);user-select:none;-webkit-user-select:none;touch-action:none}
-        .sb-thumb:hover{opacity:1;background:#34d399;left:2px;right:2px}
-        .sb-thumb.dragging{opacity:1;cursor:grabbing;background:#34d399;left:1px;right:1px;transition:none}
+        .sb-thumb{position:absolute;left:2px;right:2px;min-height:48px;border-radius:99px;background:var(--accent);opacity:.75;cursor:grab;transition:opacity .18s,background .18s;box-shadow:0 0 12px var(--accent-glow),0 2px 8px rgba(0,0,0,.35);user-select:none;-webkit-user-select:none;touch-action:none}
+        .sb-thumb:hover{opacity:1;background:#34d399;left:1px;right:1px;box-shadow:0 0 16px var(--accent-glow),0 2px 10px rgba(0,0,0,.4)}
+        .sb-thumb.dragging{opacity:1;cursor:grabbing;background:#34d399;left:0px;right:0px;transition:none;box-shadow:0 0 20px var(--accent-glow),0 2px 12px rgba(0,0,0,.5)}
 
         /* ── Overlay ── */
         .ov{display:none;position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.45);backdrop-filter:blur(2px)}
@@ -296,89 +297,125 @@ const [active,   setActive]   = useState('intro');
         const thumb = thumbRef.current;
         if (!track || !thumb) return;
 
-        // Compute geometry fresh each call
-        const geo = () => {
+        let dragging    = false;
+        let startY      = 0;
+        let startScroll = 0;
+        let cachedGeo   = null;
+
+        // Recompute only when needed
+        const getGeo = () => {
             const pageH  = document.documentElement.scrollHeight;
             const viewH  = window.innerHeight;
-            const trackH = track.clientHeight;
-            const thumbH = Math.max(40, trackH * (viewH / pageH));
-            const travel = trackH - thumbH;
-            const range  = pageH - viewH;
-            return { thumbH, travel, range };
+            const pad    = 6;                  // top+bottom padding inside track
+            const trackH = track.clientHeight - pad * 2;
+            const thumbH = Math.max(48, Math.round(trackH * viewH / pageH));
+            const travel = trackH - thumbH;   // px the thumb can move
+            const range  = pageH - viewH;     // px the page can scroll
+            return { thumbH, travel, range, pad };
         };
 
-        // Keep thumb position in sync with window scroll (skip during drag)
+        // Sync thumb position from page scroll — ignored while dragging
         const syncThumb = () => {
-            if (dragRef.current) return;
-            const { thumbH, travel, range } = geo();
+            if (dragging) return;
+            const { thumbH, travel, range, pad } = getGeo();
             thumb.style.height = thumbH + 'px';
-            thumb.style.top    = (range > 0 ? travel * (window.scrollY / range) : 0) + 'px';
+            thumb.style.top    = pad + (range > 0 ? travel * (window.scrollY / range) : 0) + 'px';
         };
 
-        // Click on the track (not on the thumb) — jump to that page position
-        const onTrackDown = (e) => {
 
-
-if (e.target === thumb) return;
+// ── Mouse drag ────────────────────────────────────────────────
+        const onMouseDown = (e) => {
             e.preventDefault();
-            const { thumbH, travel, range } = geo();
-            const relY    = e.clientY - track.getBoundingClientRect().top - thumbH / 2;
-            const clamped = Math.max(0, Math.min(travel, relY));
-            window.scrollTo({ top: range * (clamped / travel), behavior: 'smooth' });
-        };
-
-        // Drag the thumb — uses Pointer Capture so the pointer stays locked
-        // to the thumb even if the mouse moves outside the sidebar
-        const onThumbDown = (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            thumb.setPointerCapture(e.pointerId);
+            dragging    = true;
+            startY      = e.clientY;
+            startScroll = window.scrollY;
+            cachedGeo   = getGeo();             // freeze geo for this drag
             thumb.classList.add('dragging');
-            document.documentElement.style.userSelect = 'none';
-
-            const startY      = e.clientY;
-            const startScroll = window.scrollY;
-            const { travel, range } = geo();
-            dragRef.current = true;
-
-            const onMove = (ev) => {
-                const dy        = ev.clientY - startY;
-                const newScroll = Math.max(0, Math.min(range, startScroll + range * (dy / travel)));
-                // Move thumb instantly — zero lag
-                thumb.style.top = (range > 0 ? travel * (newScroll / range) : 0) + 'px';
-                // Scroll page to match
-                window.scrollTo(0, newScroll);
-            };
-
-            const onUp = () => {
-                dragRef.current = null;
-                thumb.classList.remove('dragging');
-                document.documentElement.style.userSelect = '';
-                thumb.removeEventListener('pointermove',   onMove);
-                thumb.removeEventListener('pointerup',     onUp);
-                thumb.removeEventListener('pointercancel', onUp);
-            };
-
-            thumb.addEventListener('pointermove',   onMove);
-            thumb.addEventListener('pointerup',     onUp);
-            thumb.addEventListener('pointercancel', onUp);
+            document.body.style.cursor      = 'grabbing';
+            document.body.style.userSelect  = 'none';
         };
 
+        const onMouseMove = (e) => {
+            if (!dragging) return;
+            const { travel, range, pad } = cachedGeo;
+            const dy     = e.clientY - startY;
+            const scroll = Math.max(0, Math.min(range, startScroll + dy * (range / travel)));
+            // Move thumb directly — zero render lag
+            thumb.style.top = pad + (travel > 0 ? travel * (scroll / range) : 0) + 'px';
+            window.scrollTo(0, scroll);
+        };
+
+        const onMouseUp = () => {
+            if (!dragging) return;
+            dragging = false;
+            thumb.classList.remove('dragging');
+            document.body.style.cursor     = '';
+            document.body.style.userSelect = '';
+        };
+
+        // ── Touch drag ────────────────────────────────────────────────
+        const onTouchStart = (e) => {
+            e.preventDefault();
+            dragging    = true;
+            startY      = e.touches[0].clientY;
+            startScroll = window.scrollY;
+            cachedGeo   = getGeo();
+            thumb.classList.add('dragging');
+        };
+
+        const onTouchMove = (e) => {
+            if (!dragging) return;
+            e.preventDefault();
+            const { travel, range, pad } = cachedGeo;
+            const dy     = e.touches[0].clientY - startY;
+            const scroll = Math.max(0, Math.min(range, startScroll + dy * (range / travel)));
+            thumb.style.top = pad + (travel > 0 ? travel * (scroll / range) : 0) + 'px';
+            window.scrollTo(0, scroll);
+        };
+
+        const onTouchEnd = () => {
+            dragging = false;
+            thumb.classList.remove('dragging');
+        };
+
+        // ── Click on track (not thumb) → jump ────────────────────────
+        const onTrackClick = (e) => {
+            if (e.target === thumb || dragging) return;
+            const { thumbH, travel, range, pad } = getGeo();
+            const rect  = track.getBoundingClientRect();
+            const relY  = e.clientY - rect.top - pad - thumbH / 2;
+            const top   = Math.max(0, Math.min(travel, relY));
+            window.scrollTo({ top: range * (top / travel), behavior: 'smooth' });
+        };
+
+        // mousemove + mouseup go on document so mouse can leave sidebar freely
+        thumb.addEventListener('mousedown',  onMouseDown);
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup',   onMouseUp);
+        thumb.addEventListener('touchstart', onTouchStart, { passive: false });
+        document.addEventListener('touchmove', onTouchMove, { passive: false });
+        document.addEventListener('touchend',  onTouchEnd);
+        track.addEventListener('click', onTrackClick);
         window.addEventListener('scroll', syncThumb, { passive: true });
         window.addEventListener('resize', syncThumb);
-        track.addEventListener('pointerdown', onTrackDown);
-        thumb.addEventListener('pointerdown', onThumbDown);
+
         syncThumb();
 
         return () => {
+            thumb.removeEventListener('mousedown',  onMouseDown);
+            document.removeEventListener('mousemove', onMouseMove);
+            document.removeEventListener('mouseup',   onMouseUp);
+            thumb.removeEventListener('touchstart', onTouchStart);
+            document.removeEventListener('touchmove', onTouchMove);
+            document.removeEventListener('touchend',  onTouchEnd);
+            track.removeEventListener('click', onTrackClick);
             window.removeEventListener('scroll', syncThumb);
             window.removeEventListener('resize', syncThumb);
-            track.removeEventListener('pointerdown', onTrackDown);
-            thumb.removeEventListener('pointerdown', onThumbDown);
         };
     }, []);
 
-    const scrollTo = useCallback((id) => {
+
+const scrollTo = useCallback((id) => {
         const el = document.getElementById(id);
         if (el) { el.scrollIntoView({ behavior:'smooth' }); setActive(id); setMenuOpen(false); }
     }, []);
@@ -406,9 +443,7 @@ if (e.target === thumb) return;
             {/* Sidebar */}
             <aside className={`sb${menuOpen?' open':''}`}>
                 <div className="sb-hd">
-
-
-<div className="sb-logo">
+                    <div className="sb-logo">
                         <span className="sb-orb">📖</span>
                         Предтаджвид
                     </div>
@@ -464,7 +499,8 @@ if (e.target === thumb) return;
                             <p className="hero-s">Полный курс правильного чтения Священного Корана</p>
                         </div>
 
-                        {/* §1 */}
+
+{/* §1 */}
                         <Sec id="intro" badge="§1" title="Количество арабских букв">
                             <p>Количество арабских букв насчитывает 28 или 29 — предмет разногласий учёных в том, считать ли Хамзу (<A>ء</A>) отдельной буквой.</p>
                             <h3>1.1. Различия в подсчёте</h3>
@@ -478,9 +514,7 @@ if (e.target === thumb) return;
                                 <p>Добавляется Хамза (<A>ء</A>). Два варианта последовательности:</p>
                                 <div className="cg c2" style={{marginTop:'.5rem'}}>
                                     <div className="ib2"><strong>Восточный</strong><div className="lb" style={{fontSize:'.83rem'}}><A>أَبْجَدْ، هَوَّزْ، حُطِّي، كَلَمُنْ، سَعْفَصْ، قَرَشَتْ، تَخَةٌ، ضَطَغْ</A></div></div>
-
-
-<div className="ib2"><strong>Западный</strong><div className="lb" style={{fontSize:'.83rem'}}><A>أَبْجَدْ، هَوَّزْ، حُطِّي، كَلَمُنْ، صَعْفَضْ، قَرَسَتْ، تَخَةٌ، ظَغَشُ</A></div></div>
+                                    <div className="ib2"><strong>Западный</strong><div className="lb" style={{fontSize:'.83rem'}}><A>أَبْجَدْ، هَوَّزْ، حُطِّي، كَلَمُنْ، صَعْفَضْ، قَرَسَتْ، تَخَةٌ، ظَغَشُ</A></div></div>
                                 </div>
                             </div>
                         </Sec>
@@ -510,7 +544,9 @@ if (e.target === thumb) return;
                                     <tbody>
                                         <tr><td>Фатха</td><td style={{textAlign:'center'}}><A>ـــَ</A></td><td>≈ а</td></tr>
                                         <tr><td>Дамма</td><td style={{textAlign:'center'}}><A>ـــُ</A></td><td>у</td></tr>
-                                        <tr><td>Кясра</td><td style={{textAlign:'center'}}><A>ـــِ</A></td><td>и</td></tr>
+
+
+<tr><td>Кясра</td><td style={{textAlign:'center'}}><A>ـــِ</A></td><td>и</td></tr>
                                     </tbody>
                                 </table>
                             </div>
@@ -524,9 +560,7 @@ if (e.target === thumb) return;
                             <div className="cg c3">
                                 <div className="mc" style={{textAlign:'center'}}>Танвин фатха <A>ـً</A> [ан]</div>
                                 <div className="mc" style={{textAlign:'center'}}>Танвин дамма <A>ـٌ</A> [ун]</div>
-
-
-<div className="mc" style={{textAlign:'center'}}>Танвин кясра <A>ـٍ</A> [ин]</div>
+                                <div className="mc" style={{textAlign:'center'}}>Танвин кясра <A>ـٍ</A> [ин]</div>
                             </div>
                             <p style={{marginTop:'.7rem'}}><strong>Танвин фатха:</strong> при остановке добавляется Алиф (<A>ا</A>) на 2 счёта. Исключения: <A>ا، ة، ء، ى</A>.</p>
                         </Sec>
@@ -559,7 +593,9 @@ if (e.target === thumb) return;
                                     <strong>Хамзат аль-Уасль (соединительная)</strong>
                                     <p>Только с <A>ا</A>. Не произносится при соединении.</p>
                                     <p><strong>Правило 3-й буквы (глаголы):</strong></p>
-                                    <ul>
+
+
+<ul>
                                         <li>3-я буква с кясрой/фатхой → кясра</li>
                                         <li>3-я буква с даммой → дамма</li>
                                         <li>Исключения: <A>ٱبْنُو، ٱقْضُو، ٱمْشُو</A> → кясра</li>
@@ -578,9 +614,7 @@ if (e.target === thumb) return;
                                     <div className="lb" style={{marginTop:'.5rem'}}><A>ت، ث، د، ذ، ر، ز، س، ش، ص، ض، ط، ظ، ل، ن</A></div>
                                 </div>
                                 <div className="moon-c">
-
-
-<h4 style={{color:'#6366f1',marginBottom:'.5rem'}}>🌙 Лунные буквы</h4>
+                                    <h4 style={{color:'#6366f1',marginBottom:'.5rem'}}>🌙 Лунные буквы</h4>
                                     <p style={{fontSize:'.87rem'}}>Артикль читается чётко без изменений.</p>
                                     <div className="lb" style={{marginTop:'.5rem'}}><A>أ، ب، ج، ح، خ، ع، غ، ف، ق، ك، م، هـ، و، ي</A></div>
                                 </div>
@@ -611,7 +645,9 @@ if (e.target === thumb) return;
                         {/* I–II */}
                         <Sec id="errors" badge="I–II" title="Ошибки (Аль-Лахн) и Хукм">
                             <div className="rc red">
-                                <h4>1. Аль-Лахн аль-Джали — явная ошибка</h4>
+
+
+<h4>1. Аль-Лахн аль-Джали — явная ошибка</h4>
                                 <p>Влияет на произношение, нарушает смысл или грамматику.</p>
                                 <ul>
                                     <li>Изменение огласовки: <A>أَنْعَمْتُ</A> вместо <A>أَنْعَمْتَ</A></li>
@@ -629,8 +665,7 @@ if (e.target === thumb) return;
                             </div>
                         </Sec>
 
-
-{/* Басмала */}
+                        {/* Басмала */}
                         <Sec id="basmala" badge="Басмала" title="Истиаза и Басмала">
                             <p><strong>Истиаза</strong> — обязательна при начале чтения Корана (независимо от места). <strong>Басмала</strong> в начале суры — обязательна (кроме Ат-Тауба); в середине суры — по выбору.</p>
                             <h3>Смысловые исключения (середина суры)</h3>
@@ -658,7 +693,9 @@ if (e.target === thumb) return;
                         </Sec>
 
                         {/* IV */}
-                        <Sec id="sifat" badge="IV" title="Сыфат аль-Хуруф (Свойства)">
+
+
+<Sec id="sifat" badge="IV" title="Сыфат аль-Хуруф (Свойства)">
                             <h3>1. Свойства с противоположностями</h3>
                             <div className="tw">
                                 <table className="tbl">
@@ -675,9 +712,7 @@ if (e.target === thumb) return;
                                             <td><A>ء ج د ق ط ب ك ت</A></td>
                                             <td><strong>Рахава</strong> (Мягкость)</td>
                                             <td><A>ث ح خ ذ ز س ش ص ض ظ غ ف ه و ي ا</A> <br/><span style={{fontSize:'.8rem',opacity:.75}}>(кроме <A>ل ن ع م ر</A> — Тавассут)</span></td>
-
-
-</tr>
+                                        </tr>
                                         <tr>
                                             <td><strong>Исти'ля</strong> (Подъём)</td>
                                             <td><A>خ ص ض غ ط ق ظ</A></td>
@@ -709,7 +744,9 @@ if (e.target === thumb) return;
                             <p>Четыре правила в зависимости от следующей буквы:</p>
                             <div className="rc blue" style={{marginTop:'1rem'}}><h4>1. Аль-Изхар — ясное чтение</h4><p>Перед горловыми: <A>ء هـ ع ح غ خ</A> — чётко, без гунны.</p></div>
                             <div className="rc green">
-                                <h4>2. Аль-Идгам — слияние</h4>
+
+
+<h4>2. Аль-Идгам — слияние</h4>
                                 <p>Буквы: <A>ي ر م ل و ن</A></p>
                                 <ul>
                                     <li><strong>С гунной (Янму):</strong> <A>ي ن م و</A></li>
@@ -728,8 +765,7 @@ if (e.target === thumb) return;
                             <div className="rc blue"><h4>3. Изхар Шафави — ясное</h4><p>Перед всеми остальными 26 буквами: <A>ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ق ك ل ن ه ي ء ا</A>. Особое внимание перед <A>و</A> и <A>ف</A>.</p></div>
                         </Sec>
 
-
-{/* VII */}
+                        {/* VII */}
                         <Sec id="mudud" badge="VII" title="Аль-Мудуд (Удлинения)">
                             <div className="mc" style={{marginBottom:'.7rem'}}><strong>1. Мадд Асли (Естественный)</strong><p>2 счёта. Нет причины (Хамзы/Сукуна).</p></div>
                             <h3>2. Мадд Фарʿи по причине Хамзы</h3>
@@ -752,7 +788,9 @@ if (e.target === thumb) return;
                             <div className="cg c2" style={{marginBottom:'.7rem'}}>
                                 <div className="mc"><strong>1. Всегда твёрдые (Тафхим)</strong><p>Буквы Исти'ля: <A>خ ص ض غ ط ق ظ</A>. Сильнее всего — с фатхой и алифом.</p></div>
                                 <div className="mc"><strong>2. Всегда мягкие (Таркик)</strong><p>Все буквы, кроме Алиф, Лям и Ра: <A>ب ت ث ج ح خ د ذ ز س ش ص ض ع غ ف ق ك م ن ه و ي</A></p></div>
-                            </div>
+
+
+</div>
                             <h3>3. Зависящие от условий</h3>
                             <ul>
                                 <li><strong>Алиф:</strong> следует характеру предыдущей буквы.</li>
@@ -771,8 +809,7 @@ if (e.target === thumb) return;
                             </div>
                         </Sec>
 
-
-{/* X */}
+                        {/* X */}
                         <Sec id="waqf" badge="X" title="Аль-Вакф (Остановка)">
                             <h3>Виды по смыслу</h3>
                             <div className="tw">
@@ -801,7 +838,8 @@ if (e.target === thumb) return;
                             </div>
                         </Sec>
 
-                        {/* XI */}
+
+{/* XI */}
                         <Sec id="hafs" badge="XI" title="Особенности риваята Хафса">
                             <div className="cg c2">
                                 <div className="mc"><strong>Ималя (Наклонение)</strong><p>Одно слово: <A>مَجْر۪ىٰهَا</A> (Худ, 41).</p></div>
